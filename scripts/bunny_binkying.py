@@ -106,20 +106,24 @@ view_matrix = get_view_matrix(camera_position, camera_target, camera_up)
 
 # Step 4: Transform the Bunny onto the Table
 bunny_mesh.scale(0.5, center=bunny_mesh.get_center())  # Adjust size
-bunny_mesh.translate([-0.1,0,0])  # Place it on the table
+x_positions = np.linspace(0, -0.1, 10)  # Mouvement de 0 à 1 sur l'axe X
+frames = []
 
-# Step 5: Project Bunny onto Image Plane
-projected_points = project_points(bunny_mesh, intrinsic_matrix, view_matrix)
+for x in x_positions:
+    bunny_mesh.translate(np.array([x, 0, 0]))  # Déplacer le lapin
+    projected_points = project_points(bunny_mesh, intrinsic_matrix, view_matrix)
+    frame = overlay_mesh(real_image, projected_points, bunny_mesh)
+    frames.append(frame)#cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+    bunny_mesh.translate(np.array([-x, 0, 0]))  # Réinitialiser la position du lapin
 
-# Step 6: Overlay Bunny on Real Image
-# overlay_image = overlay_mesh(real_image, projected_points, bunny_mesh)
-overlay_image = overlay_mesh_and_axes(real_image, projected_points, mesh, intrinsic_matrix, view_matrix)
+# Animation avec Matplotlib
+fig, ax = plt.subplots(figsize=(6, 4))
+im = ax.imshow(frames[0])
+ax.axis("off")
 
-# Display the Result
-plt.figure(figsize=(10, 6))
-plt.imshow(overlay_image)
-plt.axis("off")
-plt.title("Bunny Mesh Positioned on Real Table")
+def update(frame):
+    im.set_data(frame)
+    return [im]
+
+ani = animation.FuncAnimation(fig, update, frames=frames, interval=100, blit=True)
 plt.show()
-
-# image ref: https://www.fantasticfrank.com/en/sold/stockholm/vasastan/renstiernas-gata-26-2
